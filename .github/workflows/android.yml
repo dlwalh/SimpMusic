@@ -72,38 +72,16 @@ jobs:
           echo "BUILD_TOOL_VERSION=$BUILD_TOOL_VERSION" >> $GITHUB_ENV
           echo Last build tool version is: $BUILD_TOOL_VERSION
 
-      - name: Generate temporary keystore
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-        shell: bash
-        run: |
-          KS_PATH="$RUNNER_TEMP/temp-release.jks"
-          KS_ALIAS="tempkey"
-          KS_PASS="$(openssl rand -hex 16)"
-          keytool -genkeypair \
-            -keystore "$KS_PATH" \
-            -storetype PKCS12 \
-            -alias "$KS_ALIAS" \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass "$KS_PASS" \
-            -keypass "$KS_PASS" \
-            -dname "CN=Temporary, OU=CI, O=CI, L=Unknown, ST=Unknown, C=VN"
-          echo "::add-mask::$KS_PASS"
-          echo "TEMP_KS_BASE64=$(base64 -w 0 "$KS_PATH")" >> $GITHUB_ENV
-          echo "TEMP_KS_ALIAS=$KS_ALIAS" >> $GITHUB_ENV
-          echo "TEMP_KS_PASS=$KS_PASS" >> $GITHUB_ENV
-
       # A pull request from a fork gets no secrets, so it only checks that the APK builds.
       - uses: kevin-david/zipalign-sign-android-release@v2
         id: sign_app
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         with:
           releaseDirectory: androidApp/build/outputs/apk/release
-          signingKeyBase64: ${{ env.TEMP_KS_BASE64 }}
-          alias: ${{ env.TEMP_KS_ALIAS }}
-          keyStorePassword: ${{ env.TEMP_KS_PASS }}
-          keyPassword: ${{ env.TEMP_KS_PASS }}
+          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+          alias: ${{ secrets.ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
           zipAlign: true
         env:
             BUILD_TOOLS_VERSION: ${{ env.BUILD_TOOL_VERSION }}
@@ -122,9 +100,6 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-
-      - name: Update core submodule
-        run: git submodule update --remote --merge
 
       - name: set up JDK 21
         uses: actions/setup-java@v4
@@ -169,38 +144,16 @@ jobs:
           echo "BUILD_TOOL_VERSION=$BUILD_TOOL_VERSION" >> $GITHUB_ENV
           echo Last build tool version is: $BUILD_TOOL_VERSION
 
-      - name: Generate temporary keystore
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-        shell: bash
-        run: |
-          KS_PATH="$RUNNER_TEMP/temp-release.jks"
-          KS_ALIAS="tempkey"
-          KS_PASS="$(openssl rand -hex 16)"
-          keytool -genkeypair \
-            -keystore "$KS_PATH" \
-            -storetype PKCS12 \
-            -alias "$KS_ALIAS" \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass "$KS_PASS" \
-            -keypass "$KS_PASS" \
-            -dname "CN=Temporary, OU=CI, O=CI, L=Unknown, ST=Unknown, C=VN"
-          echo "::add-mask::$KS_PASS"
-          echo "TEMP_KS_BASE64=$(base64 -w 0 "$KS_PATH")" >> $GITHUB_ENV
-          echo "TEMP_KS_ALIAS=$KS_ALIAS" >> $GITHUB_ENV
-          echo "TEMP_KS_PASS=$KS_PASS" >> $GITHUB_ENV
-
       # A pull request from a fork gets no secrets, so it only checks that the APK builds.
       - uses: kevin-david/zipalign-sign-android-release@v2
         id: sign_app
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         with:
           releaseDirectory: vivoAndroidApp/build/outputs/apk/release
-          signingKeyBase64: ${{ env.TEMP_KS_BASE64 }}
-          alias: ${{ env.TEMP_KS_ALIAS }}
-          keyStorePassword: ${{ env.TEMP_KS_PASS }}
-          keyPassword: ${{ env.TEMP_KS_PASS }}
+          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+          alias: ${{ secrets.ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
           zipAlign: true
         env:
             BUILD_TOOLS_VERSION: ${{ env.BUILD_TOOL_VERSION }}
